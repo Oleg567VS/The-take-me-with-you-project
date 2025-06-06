@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить найденное животное</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+<div class="avito-form-card">
+    <div class="avito-form-title">Добавить найденное животное</div>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="avito-form-section">
+            <label for="name">Кличка (если известна)</label>
+            <input type="text" id="name" name="name">
+            <label for="view">Вид</label>
+            <input type="text" id="view" name="view" required>
+            {% if errors.view %}<div class="alert-error">{{ errors.view }}</div>{% endif %}
+            <label for="breed">Порода</label>
+            <input type="text" id="breed" name="breed">
+            <label for="color">Окрас</label>
+            <input type="text" id="color" name="color">
+            <label for="place_found">Место находки</label>
+            <input type="text" id="place_found" name="place_found" required>
+            {% if errors.place_found %}<div class="alert-error">{{ errors.place_found }}</div>{% endif %}
+            <div class="flex-gap-10">
+                <div class="flex1">
+                    <label for="latitude">Широта</label>
+                    <input type="text" id="latitude" name="latitude" placeholder="например, 55.751244">
+                </div>
+                <div class="flex1">
+                    <label for="longitude">Долгота</label>
+                    <input type="text" id="longitude" name="longitude" placeholder="например, 37.618423">
+                </div>
+            </div>
+            <label for="date_found">Дата находки</label>
+            <input type="date" id="date_found" name="date_found" required>
+            {% if errors.date_found %}<div class="alert-error">{{ errors.date_found }}</div>{% endif %}
+            <label for="info">Дополнительная информация</label>
+            <textarea id="info" name="info" rows="3"></textarea>
+        </div>
+        <div class="avito-form-section avito-photo-upload">
+            <label for="photo">Фото животного</label>
+            <input type="file" id="photo" name="photo" accept="image/*">
+        </div>
+        <div class="avito-form-btns">
+            <button type="submit" class="btn">Добавить</button>
+            <a href="/profile/" class="btn btn-secondary">Назад</a>
+        </div>
+    </form>
+</div>
+</body>
+</html> 

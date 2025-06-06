@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать приют</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <style>
+        .avito-form-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px #0001;
+            padding: 32px 24px 24px 24px;
+            max-width: 480px;
+            margin: 40px auto 0 auto;
+        }
+        .avito-form-title {
+            font-size: 2.1em;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .avito-form-section {
+            margin-bottom: 18px;
+        }
+        .avito-form-section label {
+            font-weight: 600;
+            color: #444;
+        }
+        .avito-form-section input,
+        .avito-form-section select,
+        .avito-form-section textarea {
+            width: 100%;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1.5px solid #e0e0e0;
+            font-size: 1.08em;
+            background: #fafbfc;
+            transition: border 0.2s;
+        }
+        .avito-form-section input:focus,
+        .avito-form-section select:focus,
+        .avito-form-section textarea:focus {
+            border: 1.5px solid #FFB347;
+            outline: none;
+        }
+        .avito-form-btns {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .avito-form-btns .btn {
+            flex: 1;
+        }
+        @media (max-width: 600px) {
+            .avito-form-card {
+                padding: 12px 2vw 18px 2vw;
+                max-width: 99vw;
+            }
+            .avito-form-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="avito-form-card">
+    <div class="avito-form-title">Редактировать приют</div>
+    {% if success %}
+        <div class="alert-success">Данные приюта успешно сохранены!</div>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="avito-form-section">
+            <label for="name_shelter">Название приюта</label>
+            <input type="text" id="name_shelter" name="name_shelter" required value="{{ shelter.name_shelter }}">
+            {% if errors.name_shelter %}<div class="alert-error">{{ errors.name_shelter }}</div>{% endif %}
+            <label for="address_shelter">Адрес</label>
+            <input type="text" id="address_shelter" name="address_shelter" required value="{{ shelter.address_shelter }}">
+            {% if errors.address_shelter %}<div class="alert-error">{{ errors.address_shelter }}</div>{% endif %}
+            <label for="email_shelter">Email</label>
+            <input type="email" id="email_shelter" name="email_shelter" value="{{ shelter.email_shelter }}">
+            <label for="telephone_shelter">Телефон</label>
+            <input type="text" id="telephone_shelter" name="telephone_shelter" value="{{ shelter.telephone_shelter }}">
+            <label for="capacity">Вместимость</label>
+            <input type="number" id="capacity" name="capacity" min="1" value="{{ shelter.capacity }}">
+            <label for="city">Город</label>
+            <input type="text" id="city" name="city" required value="{{ shelter.city }}">
+            {% if errors.city %}<div class="alert-error">{{ errors.city }}</div>{% endif %}
+        </div>
+        <div class="avito-form-btns">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="/profile/" class="btn btn-secondary">Назад</a>
+        </div>
+    </form>
+</div>
+</body>
+</html> 

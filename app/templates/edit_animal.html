@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать животное</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <style>
+        .avito-form-card { background:#fff; border-radius:18px; box-shadow:0 4px 24px #0001; padding:32px 24px 24px 24px; max-width:480px; margin:40px auto 0 auto; }
+        .avito-form-title { font-size:2.1em; font-weight:700; color:#222; margin-bottom:18px; text-align:center; }
+        .avito-form-section { margin-bottom:18px; }
+        .avito-form-section label { font-weight:600; color:#444; }
+        .avito-form-section input, .avito-form-section select, .avito-form-section textarea { width:100%; margin-top:4px; margin-bottom:10px; padding:12px; border-radius:8px; border:1.5px solid #e0e0e0; font-size:1.08em; background:#fafbfc; transition:border 0.2s; }
+        .avito-form-section input:focus, .avito-form-section select:focus, .avito-form-section textarea:focus { border:1.5px solid #FFB347; outline:none; }
+        .avito-form-btns { display:flex; gap:12px; margin-top:18px; }
+        .avito-form-btns .btn { flex:1; }
+        @media (max-width:600px) { .avito-form-card { padding:12px 2vw 18px 2vw; max-width:99vw; } .avito-form-title { font-size:1.2em; } }
+    </style>
+</head>
+<body>
+<div class="avito-form-card">
+    <div class="avito-form-title">Редактировать животное</div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="avito-form-section">
+            <label for="nickname_pets">Кличка</label>
+            <input type="text" id="nickname_pets" name="nickname_pets" required value="{{ animal.nickname_pets }}">
+            {% if errors.nickname_pets %}<div class="alert-error">{{ errors.nickname_pets }}</div>{% endif %}
+            <label for="breed">Порода</label>
+            <input type="text" id="breed" name="breed" value="{{ animal.breed }}">
+            <label for="age">Возраст</label>
+            <input type="number" id="age" name="age" min="0" required value="{{ animal.age }}">
+            {% if errors.age %}<div class="alert-error">{{ errors.age }}</div>{% endif %}
+            <label for="size">Размер</label>
+            <select id="size" name="size" required>
+                <option value="">— Выберите размер —</option>
+                <option value="small" {% if animal.size == "small" %}selected{% endif %}>Маленький</option>
+                <option value="medium" {% if animal.size == "medium" %}selected{% endif %}>Средний</option>
+                <option value="large" {% if animal.size == "large" %}selected{% endif %}>Крупный</option>
+            </select>
+            {% if errors.size %}<div class="alert-error">{{ errors.size }}</div>{% endif %}
+            <label for="view">Вид</label>
+            <input type="text" id="view" name="view" required value="{{ animal.view }}">
+            {% if errors.view %}<div class="alert-error">{{ errors.view }}</div>{% endif %}
+            <label for="gender">Пол</label>
+            <select id="gender" name="gender" required>
+                <option value="">— Выберите пол —</option>
+                <option value="male" {% if animal.gender == "male" %}selected{% endif %}>Самец</option>
+                <option value="female" {% if animal.gender == "female" %}selected{% endif %}>Самка</option>
+            </select>
+            {% if errors.gender %}<div class="alert-error">{{ errors.gender }}</div>{% endif %}
+            <label for="color">Окрас</label>
+            <input type="text" id="color" name="color" value="{{ animal.color }}">
+            <label for="info">Информация о животном</label>
+            <textarea id="info" name="info" rows="3">{{ animal.info }}</textarea>
+        </div>
+        <div class="avito-form-btns">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="/profile/" class="btn btn-secondary">Назад</a>
+        </div>
+    </form>
+</div>
+</body>
+</html> 

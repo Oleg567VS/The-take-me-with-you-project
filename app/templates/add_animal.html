@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить животное в приют</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <style>
+        .avito-form-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px #0001;
+            padding: 32px 24px 24px 24px;
+            max-width: 480px;
+            margin: 40px auto 0 auto;
+        }
+        .avito-form-title {
+            font-size: 2.1em;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .avito-form-section {
+            margin-bottom: 18px;
+        }
+        .avito-form-section label {
+            font-weight: 600;
+            color: #444;
+        }
+        .avito-form-section input,
+        .avito-form-section select,
+        .avito-form-section textarea {
+            width: 100%;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1.5px solid #e0e0e0;
+            font-size: 1.08em;
+            background: #fafbfc;
+            transition: border 0.2s;
+        }
+        .avito-form-section input:focus,
+        .avito-form-section select:focus,
+        .avito-form-section textarea:focus {
+            border: 1.5px solid #FFB347;
+            outline: none;
+        }
+        .avito-photo-upload {
+            background: #f8f8f8;
+            border: 2px dashed #FFB347;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            margin-bottom: 18px;
+        }
+        .avito-photo-upload input[type="file"] {
+            display: block;
+            margin: 0 auto;
+        }
+        .avito-photo-preview {
+            margin-top: 10px;
+            min-height: 40px;
+            color: #aaa;
+            font-size: 0.98em;
+        }
+        .avito-form-btns {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .avito-form-btns .btn {
+            flex: 1;
+        }
+        @media (max-width: 600px) {
+            .avito-form-card {
+                padding: 12px 2vw 18px 2vw;
+                max-width: 99vw;
+            }
+            .avito-form-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="avito-form-card">
+    <div class="avito-form-title">Добавить животное в приют</div>
+    {% if errors.shelter %}<div class="alert-error" style="margin-bottom:14px;">{{ errors.shelter }}</div>{% endif %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="avito-form-section">
+            <label for="nickname_pets">Кличка</label>
+            <input type="text" id="nickname_pets" name="nickname_pets" required value="{{ values.nickname_pets|default:'' }}">
+            {% if errors.nickname_pets %}<div class="alert-error">{{ errors.nickname_pets }}</div>{% endif %}
+            <label for="breed">Порода</label>
+            <input type="text" id="breed" name="breed" value="{{ values.breed|default:'' }}">
+            <label for="age">Возраст</label>
+            <input type="number" id="age" name="age" min="0" required value="{{ values.age|default:'' }}">
+            {% if errors.age %}<div class="alert-error">{{ errors.age }}</div>{% endif %}
+            <label for="view">Вид</label>
+            <input type="text" id="view" name="view" required value="{{ values.view|default:'' }}">
+            {% if errors.view %}<div class="alert-error">{{ errors.view }}</div>{% endif %}
+            <label for="gender">Пол</label>
+            <select id="gender" name="gender" required>
+                <option value="">— Выберите пол —</option>
+                <option value="male" {% if values.gender == 'male' %}selected{% endif %}>Самец</option>
+                <option value="female" {% if values.gender == 'female' %}selected{% endif %}>Самка</option>
+            </select>
+            {% if errors.gender %}<div class="alert-error">{{ errors.gender }}</div>{% endif %}
+            <label for="color">Окрас</label>
+            <input type="text" id="color" name="color" value="{{ values.color|default:'' }}">
+            <label for="info">Информация о животном</label>
+            <textarea id="info" name="info" rows="3">{{ values.info|default:'' }}</textarea>
+            <label for="size">Размер</label>
+            <select id="size" name="size" required>
+                <option value="">— Выберите размер —</option>
+                <option value="small" {% if values.size == 'small' %}selected{% endif %}>Маленький</option>
+                <option value="medium" {% if values.size == 'medium' %}selected{% endif %}>Средний</option>
+                <option value="large" {% if values.size == 'large' %}selected{% endif %}>Крупный</option>
+            </select>
+        </div>
+        <div class="avito-form-section avito-photo-upload">
+            <label for="photo">Фото животного (можно выбрать несколько)</label>
+            <input type="file" id="photo" name="photo" accept="image/*" multiple>
+            <div class="avito-photo-preview">(Можно выбрать несколько файлов)</div>
+        </div>
+        <div class="avito-form-btns">
+            <button type="submit" class="btn">Добавить</button>
+            <a href="/profile/" class="btn btn-secondary">Назад</a>
+        </div>
+    </form>
+</div>
+</body>
+</html> 

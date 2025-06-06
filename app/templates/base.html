@@ -8,28 +8,38 @@
 
     <!-- Подключение CSS -->
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'style/style.css' %}">
 </head>
 <body>
 
 <header>
-    <h1>Помощь животным</h1>
-    <p>Спасаем, заботимся, помогаем найти дом</p>
+    <div class="header-content">
+        <a href="/" class="logo"><img src="/static/img/logo3-_1_.png" alt="Логотип"><span>Забери меня с собой</span></a>
+        <nav>
+            <a href="/lost-found/">Найти животное</a>
+            <a href="/take/">Взять животное</a>
+            <a href="/chats/" title="Чаты" style="display:inline-block;vertical-align:middle;margin:0 8px;">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M2 5.5A2.5 2.5 0 0 1 4.5 3h15A2.5 2.5 0 0 1 22 5.5v13a.5.5 0 0 1-.8.4l-4.6-3.45a2.5 2.5 0 0 0-3 0l-4.6 3.45a.5.5 0 0 1-.8-.4v-13Z" stroke="#FF6F61" stroke-width="1.5" fill="#fff"/><path d="M4 6l8 6 8-6" stroke="#FFB347" stroke-width="1.5"/></svg>
+            </a>
+            {% if user.is_authenticated %}
+                <a href="/logout/">Выйти</a>
+                <a href="/profile/" class="user-avatar">
+                    <img src="/static/img/user-avatar.svg" alt="Профиль">
+                </a>
+                <a href="/chats/" style="margin-left:10px;font-weight:600;">Чаты</a>
+            {% else %}
+                <a href="/login/">Вход</a>
+                <a href="/register/">Регистрация</a>
+            {% endif %}
+        </nav>
+    </div>
 </header>
 
 <nav>
-    <a href="{% url 'home' %}">Главная</a>
-    <a href="{% url 'animals_list' %}">Животные в приюте</a>
-    <a href="{% url 'lost_animals' %}">Потерянные</a>
-    <a href="{% url 'found_animals' %}">Найденные</a>
-
-    {% if user.is_authenticated %}
-        <a href="{% url 'profile' %}">Профиль</a>
-        <a href="{% url 'logout' %}">Выйти</a>
-    {% else %}
-        <a href="{% url 'login' %}">Войти</a>
-        <a href="{% url 'register' %}">Регистрация</a>
-    {% endif %}
+    <a href="/">Главная</a>
+    <a href="/take/">Животные в приюте</a>
+    <a href="/lost-found/?status=lost">Потерянные</a>
+    <a href="/lost-found/?status=found">Найденные</a>
 </nav>
 
 <div class="container">

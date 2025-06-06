@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Взять животное — Забери меня с собой</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <style>
+        .filters-block { background:#fff; border-radius:16px; box-shadow:0 2px 12px #0001; padding:24px 18px 10px 18px; margin-bottom:32px; }
+        .filters-form { display:flex; flex-wrap:wrap; gap:18px 24px; align-items:flex-end; }
+        .filters-form label { font-weight:600; color:#444; margin-bottom:4px; display:block; }
+        .filters-form select, .filters-form input[type="text"], .filters-form input[type="number"] { padding:8px 10px; border-radius:8px; border:1.5px solid #e0e0e0; font-size:1em; background:#fafbfc; min-width:120px; }
+        .filters-form .range-block { min-width:160px; }
+        .filters-form .btn { padding:10px 22px; border-radius:8px; background:#FFB347; color:#fff; border:none; font-weight:600; font-size:1em; cursor:pointer; transition:background 0.18s; }
+        .filters-form .btn:hover { background:#FF6F61; }
+        .filters-form .btn-reset { background:#f4f6fa; color:#FF6F61; border:1.2px solid #e0e0e0; margin-left:8px; }
+        .filters-form .btn-reset:hover { background:#ffe6e2; color:#d00; }
+        .animals-grid { margin-top:0; }
+        .pagination { display:flex; gap:8px; justify-content:center; margin:32px 0 0 0; }
+        .pagination a, .pagination span { padding:8px 14px; border-radius:7px; background:#f4f6fa; color:#FF6F61; text-decoration:none; font-weight:500; border:1.2px solid #e0e0e0; transition:background 0.18s, color 0.18s; }
+        .pagination .current { background:#FFB347; color:#fff; border:none; }
+        .pagination a:hover { background:#ffe6e2; color:#d00; }
+        @media (max-width:700px) { .filters-form { flex-direction:column; gap:12px; } }
+        .logo, .logo span { text-decoration: none !important; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <a href="/" class="logo"><img src="/static/img/logo3-_1_.png" alt="Логотип"><span>Забери меня с собой</span></a>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="/lost-found/">Найти животное</a>
+            <a href="/take/">Взять животное</a>
+            {% if user.is_authenticated %}
+                <a href="/logout/">Выйти</a>
+                <a href="/profile/" class="user-avatar">
+                    <img src="/static/img/user-avatar.svg" alt="Профиль">
+                </a>
+                <a href="/chats/" class="margin-left-10 font-weight-600">Чаты</a>
+            {% else %}
+                <a href="/login/">Вход</a>
+                <a href="/register/">Регистрация</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<div class="container">
+    <h1 class="section-title">Взять животное</h1>
+    <div class="filters-block">
+        <form method="get" class="filters-form">
+            <div>
+                <label for="size">Размер</label>
+                <select name="size" id="size">
+                    <option value="">Любой</option>
+                    <option value="small" {% if filter.size == "small" %}selected{% endif %}>Маленький</option>
+                    <option value="medium" {% if filter.size == "medium" %}selected{% endif %}>Средний</option>
+                    <option value="large" {% if filter.size == "large" %}selected{% endif %}>Крупный</option>
+                </select>
+            </div>
+            <div class="range-block">
+                <label>Возраст</label>
+                <input type="number" name="age_min" min="0" max="50" value="{{ filter.age_min|default:'' }}" placeholder="от"> —
+                <input type="number" name="age_max" min="0" max="50" value="{{ filter.age_max|default:'' }}" placeholder="до">
+            </div>
+            <div>
+                <label for="city">Город</label>
+                <select name="city" id="city">
+                    <option value="">Любой</option>
+                    {% for c in cities %}
+                        <option value="{{ c }}" {% if filter.city == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="breed">Порода</label>
+                <select name="breed" id="breed">
+                    <option value="">Любая</option>
+                    {% for b in breeds %}
+                        <option value="{{ b }}" {% if filter.breed == b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="gender">Пол</label>
+                <select name="gender" id="gender">
+                    <option value="">Любой</option>
+                    <option value="male" {% if filter.gender == "male" %}selected{% endif %}>Самец</option>
+                    <option value="female" {% if filter.gender == "female" %}selected{% endif %}>Самка</option>
+                </select>
+            </div>
+            <div>
+                <label for="view">Вид</label>
+                <select name="view" id="view">
+                    <option value="">Любой</option>
+                    {% for v in views %}
+                        <option value="{{ v }}" {% if filter.view == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="per_page">На странице</label>
+                <select name="per_page" id="per_page">
+                    <option value="20" {% if filter.per_page == 20 or filter.per_page == "20" %}selected{% endif %}>20</option>
+                    <option value="50" {% if filter.per_page == 50 or filter.per_page == "50" %}selected{% endif %}>50</option>
+                    <option value="100" {% if filter.per_page == 100 or filter.per_page == "100" %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn">Показать</button>
+                <a href="/take/" class="btn btn-reset">Сбросить</a>
+            </div>
+        </form>
+    </div>
+    <div class="animals-grid">
+        {% for animal in page_obj %}
+        <div class="animal-card">
+            {% with photos=animal.photos.all %}
+                {% if photos %}
+                    <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                {% else %}
+                    <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                {% endif %}
+            {% endwith %}
+            <h3>{{ animal.nickname_pets }}</h3>
+            <p>{{ animal.breed }}, {{ animal.age }} лет</p>
+            <p><b>{{ animal.shelter.name_shelter }}</b></p>
+            <a href="/animal/{{ animal.id }}/" class="btn">Подробнее</a>
+        </div>
+        {% empty %}
+        <div class="grid-col-all text-center color-888 font-size-12em">Животные не найдены по выбранным фильтрам.</div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{k}}={{v}}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">Назад</a>
+        {% endif %}
+        <span class="current">{{ page_obj.number }}</span>
+        {% if page_obj.has_next %}
+            <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{k}}={{v}}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">Вперёд</a>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html> 

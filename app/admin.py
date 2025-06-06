@@ -15,7 +15,14 @@ from .models import (
 # Регистрация моделей
 admin.site.register(AdminSite)
 admin.site.register(CustomUser)
-admin.site.register(Shelter)
+
+class ShelterAdmin(admin.ModelAdmin):
+    list_display = ("name_shelter", "address_shelter", "email_shelter", "telephone_shelter", "capacity", "is_approved")
+    list_filter = ("is_approved",)
+    search_fields = ("name_shelter", "address_shelter", "email_shelter", "telephone_shelter")
+
+admin.site.register(Shelter, ShelterAdmin)
+
 admin.site.register(ShelterRepresentative)
 admin.site.register(Animal)
 admin.site.register(Photo)

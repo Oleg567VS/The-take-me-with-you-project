@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль пользователя</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <a href="/" class="logo logo-flex">
+            <img src="/static/img/logo3-_1_.png" alt="Логотип" class="logo-img-large">
+            <span class="logo-title-large">Забери меня с собой</span>
+        </a>
+    </div>
+</header>
+<div class="y-card">
+    <img src="/static/img/user-avatar.svg" alt="Аватар" class="y-avatar">
+    <div class="y-username">{{ user.username }}</div>
+    {% if success %}
+        <div class="alert-success">Данные успешно сохранены!</div>
+    {% endif %}
+    <form method="post" class="y-form">
+        {% csrf_token %}
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{ user.email }}" placeholder="Введите email">
+        {% if errors.email %}<div class="alert-error">{{ errors.email }}</div>{% endif %}
+        <label for="telephone">Телефон</label>
+        <input type="text" id="telephone" name="telephone" value="{{ user.telephone }}" placeholder="Введите телефон">
+        {% if errors.telephone %}<div class="alert-error">{{ errors.telephone }}</div>{% endif %}
+        <label for="address">Адрес</label>
+        <input type="text" id="address" name="address" value="{{ user.address }}" placeholder="Введите адрес">
+        {% if errors.address %}<div class="alert-error">{{ errors.address }}</div>{% endif %}
+        <div class="y-role-block">
+            {% if shelter_rep %}
+                Роль: Представитель приюта<br>Приют: {{ shelter_rep.shelter.name_shelter }}
+            {% elif admin_profile %}
+                Роль: Администратор сайта
+            {% else %}
+                Роль: Пользователь
+            {% endif %}
+        </div>
+        <button type="submit" class="y-btn y-btn-save margin-bottom-18" style="width:100%;margin-top:18px;">Сохранить</button>
+    </form>
+    <div class="y-btns-row">
+        <a href="/add-lost/" class="y-btn">Пропал</a>
+        <a href="/add-found/" class="y-btn">Найден</a>
+        {% if shelter_rep %}
+            <a href="/edit-shelter/" class="y-btn-secondary">Редактировать приют</a>
+            <a href="/add-animal/" class="y-btn-secondary">Добавить животное</a>
+        {% endif %}
+    </div>
+    <a href="/logout/" class="y-logout">Выйти</a>
+    {% if shelter_rep and animals %}
+    <div class="profile-animals-block">
+        <div class="profile-animals-title">Животные приюта:</div>
+        <div class="profile-animals-list">
+            {% for animal in animals %}
+            <div class="shelter-animal-card">
+                {% with photos=animal.photos.all %}
+                    {% if photos %}
+                        <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}" class="animal-photo">
+                    {% else %}
+                        <img src="https://placehold.co/60x60?text=Нет+фото" alt="Нет фото" class="animal-photo">
+                    {% endif %}
+                {% endwith %}
+                <div class="animal-info">
+                    <div class="animal-name">{{ animal.nickname_pets }}</div>
+                    <div class="animal-desc">{{ animal.breed }}, {{ animal.age }} лет</div>
+                </div>
+                <div class="animal-actions">
+                    <a href="/edit-animal/{{ animal.id }}/" class="edit-btn">Редактировать</a>
+                    <form method="post" action="/delete-animal/{{ animal.id }}/" class="delete-form">
+                        {% csrf_token %}
+                        <button type="submit" class="delete-btn">Удалить</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+</body>
+</html> 

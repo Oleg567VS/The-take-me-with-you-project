@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Найденное животное — Забери меня с собой</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <style>
+        .detail-card { background:#fff; border-radius:18px; box-shadow:0 4px 24px #0001; max-width:600px; margin:40px auto 0 auto; padding:32px 24px 24px 24px; }
+        .detail-photo { width:100%; max-width:480px; height:240px; object-fit:cover; border-radius:12px; margin-bottom:18px; background:#f4f6fa; }
+        .detail-title { font-size:2em; font-weight:700; color:#222; margin-bottom:10px; }
+        .detail-info { font-size:1.1em; color:#444; margin-bottom:8px; }
+        .detail-label { color:#888; font-size:0.98em; margin-right:8px; }
+        .detail-back { display:inline-block; margin-top:22px; padding:10px 28px; background:#FFB347; color:#fff; border-radius:8px; text-decoration:none; font-weight:600; transition:background 0.18s; }
+        .detail-back:hover { background:#FF6F61; }
+        .chat-block { background:#f8f8fa; border-radius:14px; box-shadow:0 2px 8px #0001; margin-top:32px; padding:18px 14px; }
+        .chat-title { font-size:1.15em; font-weight:600; color:#444; margin-bottom:10px; }
+        .chat-messages { max-height:260px; overflow-y:auto; margin-bottom:12px; }
+        .chat-msg { display:flex; align-items:flex-end; margin-bottom:10px; }
+        .chat-msg.me { flex-direction:row-reverse; }
+        .chat-avatar { width:38px; height:38px; border-radius:50%; background:#eee; margin:0 10px; object-fit:cover; }
+        .chat-msg > div { min-width: 0; }
+        .chat-bubble { background:#fff; border-radius:10px; padding:10px 16px; box-shadow:0 1px 4px #0001; font-size:1em; color:#222; max-width:70%; word-break:break-word; overflow-wrap:break-word; }
+        .chat-msg.me .chat-bubble { background:#FFB347; color:#fff; text-align:left; }
+        .chat-meta { font-size:0.85em; color:#888; margin-top:2px; }
+        .chat-form { display:flex; gap:10px; margin-top:10px; }
+        .chat-form textarea { flex:1; border-radius:8px; border:1.2px solid #e0e0e0; padding:8px; font-size:1em; resize:vertical; min-height:36px; }
+        .chat-form button { background:#FFB347; color:#fff; border:none; border-radius:8px; padding:10px 22px; font-weight:600; font-size:1em; cursor:pointer; transition:background 0.18s; }
+        .chat-form button:hover { background:#FF6F61; }
+        @media (max-width:600px) { .detail-card { padding:12px 2vw 18px 2vw; max-width:99vw; } .detail-title{font-size:1.2em;} }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <div class="logo">
+            <img src="/static/img/logo3-_1_.png" alt="Логотип">
+            <span>Забери меня с собой</span>
+        </div>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="/lost-found/">Найти животное</a>
+            <a href="/take/">Взять животное</a>
+            {% if user.is_authenticated %}
+                <a href="/logout/">Выйти</a>
+                <a href="/profile/" class="user-avatar">
+                    <img src="/static/img/user-avatar.svg" alt="Профиль">
+                </a>
+                <a href="/chats/" class="margin-left-10 font-weight-600">Чаты</a>
+            {% else %}
+                <a href="/login/">Вход</a>
+                <a href="/register/">Регистрация</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<div class="detail-card">
+    {% if animal.photo %}
+        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" class="detail-photo">
+    {% else %}
+        <div class="detail-photo flex-center color-aaa">Нет фото</div>
+    {% endif %}
+    <div class="detail-title">{{ animal.name|default:'Без клички' }}</div>
+    <div class="detail-info"><span class="detail-label">Вид:</span>{{ animal.view }}</div>
+    {% if animal.breed %}<div class="detail-info"><span class="detail-label">Порода:</span>{{ animal.breed }}</div>{% endif %}
+    {% if animal.color %}<div class="detail-info"><span class="detail-label">Окрас:</span>{{ animal.color }}</div>{% endif %}
+    <div class="detail-info"><span class="detail-label">Место находки:</span>{{ animal.place_found }}</div>
+    <div class="detail-info"><span class="detail-label">Дата находки:</span>{{ animal.date_found }}</div>
+    {% if animal.info %}<div class="detail-info"><span class="detail-label">Информация:</span>{{ animal.info }}</div>{% endif %}
+    <div class="chat-block">
+        <div class="chat-title">Чат</div>
+        <div class="chat-messages">
+            {% for msg in messages %}
+                <div class="chat-msg{% if msg.sender == user %} me{% endif %}">
+                    <img class="chat-avatar" src="/static/img/user-avatar.svg" alt="avatar">
+                    <div>
+                        <div class="chat-bubble">{{ msg.text }}</div>
+                        <div class="chat-meta">{{ msg.sender.username }} • {{ msg.created_at|date:'d.m.Y H:i' }}</div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="color-aaa text-center">Пока нет сообщений</div>
+            {% endfor %}
+        </div>
+        {% if user %}
+            <form method="post" class="chat-form margin-top-10">
+                {% csrf_token %}
+                <textarea name="text" placeholder="Введите сообщение..." required autofocus></textarea>
+                <button type="submit">Отправить</button>
+            </form>
+        {% else %}
+            <div class="color-888 font-size-098 text-center margin-top-8">Войдите, чтобы написать нашедшему</div>
+        {% endif %}
+    </div>
+    {% if can_close %}
+    <form method="post" class="margin-top-18 display-inline-block">
+        {% csrf_token %}
+        <button type="submit" name="action" value="delete" class="detail-back btn-delete">Удалить объявление</button>
+    </form>
+    {% endif %}
+    <a href="/lost-found/?status=found" class="detail-back">Назад</a>
+</div>
+</body>
+</html> 

@@ -30,10 +30,12 @@ class AdminSite(models.Model):
 
 class Shelter(models.Model):
     name_shelter = models.CharField("Название приюта", max_length=255)
+    city = models.CharField("Город", max_length=100, default="Не указан")
     address_shelter = models.TextField("Адрес приюта")
     email_shelter = models.EmailField("Email приюта", blank=True, null=True)
     telephone_shelter = models.CharField("Телефон приюта", max_length=20, blank=True, null=True)
     capacity = models.PositiveIntegerField("Вместимость")
+    is_approved = models.BooleanField("Подтверждён администратором", default=False)
 
     def __str__(self):
         return self.name_shelter
@@ -61,10 +63,17 @@ GENDER_CHOICES = [
     ('female', 'Самка'),
 ]
 
+SIZE_CHOICES = [
+    ('small', 'Маленький'),
+    ('medium', 'Средний'),
+    ('large', 'Крупный'),
+]
+
 class Animal(models.Model):
     nickname_pets = models.CharField("Кличка", max_length=150)
     breed = models.CharField("Порода", max_length=100)
     age = models.PositiveIntegerField("Возраст")
+    size = models.CharField("Размер", max_length=10, choices=SIZE_CHOICES, default='medium')
     view = models.CharField("Вид", max_length=100)
     gender = models.CharField("Пол", max_length=10, choices=GENDER_CHOICES)
     color = models.CharField("Окрас", max_length=100)
@@ -120,6 +129,8 @@ class LostAnimal(models.Model):
     gender = models.CharField("Пол", max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     color = models.CharField("Окрас", max_length=100, blank=True, null=True)
     place_of_loss = models.TextField("Место пропажи")
+    latitude = models.FloatField("Широта", blank=True, null=True)
+    longitude = models.FloatField("Долгота", blank=True, null=True)
     date_of_loss = models.DateField("Дата пропажи", default=timezone.now)
     info = models.TextField("Дополнительная информация", blank=True, null=True)
     reward = models.PositiveIntegerField("Награда (руб.)", blank=True, null=True)
@@ -128,6 +139,7 @@ class LostAnimal(models.Model):
     photo = models.ImageField("Фото животного", upload_to='lost_animals/', blank=True, null=True)
     date_reported = models.DateTimeField("Дата подачи объявления", auto_now_add=True)
     is_found = models.BooleanField("Найдено", default=False)
+    is_deleted = models.BooleanField("Удалено", default=False)
 
     def __str__(self):
         return f"{self.lostie_name} ({self.owner.username})"
@@ -137,7 +149,7 @@ class LostAnimal(models.Model):
         verbose_name_plural = "Потерянные животные"
 
 class FoundReport(models.Model):
-    losties = models.ForeignKey('LostAnimal', on_delete=models.CASCADE, verbose_name="Потерянное животное")
+    losties = models.ForeignKey('LostAnimal', on_delete=models.CASCADE, verbose_name="Потерянное животное", null=True, blank=True)
     the_finder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Нашёл")
     place_found = models.TextField("Место находки", blank=True, null=True)
     date_found = models.DateField("Дата находки", default=timezone.now)
@@ -147,7 +159,8 @@ class FoundReport(models.Model):
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
     def __str__(self):
-        return f"{self.losties.lostie_name} найден пользователем {self.the_finder.username}"
+        lost_name = self.losties.lostie_name if self.losties else "Без привязки"
+        return f"{lost_name} найден пользователем {self.the_finder.username}"
 
     class Meta:
         verbose_name = "Запись о находке"
@@ -160,11 +173,14 @@ class FoundAnimal(models.Model):
     gender = models.CharField("Пол", max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     color = models.CharField("Окрас", max_length=100, blank=True, null=True)
     place_found = models.TextField("Место находки")
+    latitude = models.FloatField("Широта", blank=True, null=True)
+    longitude = models.FloatField("Долгота", blank=True, null=True)
     date_found = models.DateField("Дата находки", default=timezone.now)
     finder = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="Нашёл", related_name='found_animals')
     photo = models.ImageField("Фото", upload_to='found_animals/', blank=True, null=True)
     info = models.TextField("Дополнительная информация", blank=True, null=True)
     is_matched = models.BooleanField("Совпадение найдено", default=False)
+    is_deleted = models.BooleanField("Удалено", default=False)
     created_at = models.DateTimeField("Дата создания", auto_now_add=True)
 
     def __str__(self):
@@ -173,3 +189,18 @@ class FoundAnimal(models.Model):
     class Meta:
         verbose_name = "Найденное животное"
         verbose_name_plural = "Найденные животные"
+
+class Message(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_messages')
+    text = models.TextField("Сообщение")
+    created_at = models.DateTimeField(auto_now_add=True)
+    found_animal = models.ForeignKey('FoundAnimal', on_delete=models.CASCADE, null=True, blank=True, related_name='messages')
+    lost_animal = models.ForeignKey('LostAnimal', on_delete=models.CASCADE, null=True, blank=True, related_name='messages')
+
+    def __str__(self):
+        return f"{self.sender} → {self.recipient}: {self.text[:30]}"
+
+    class Meta:
+        verbose_name = "Сообщение"
+        verbose_name_plural = "Сообщения"

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация — Забери меня с собой</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+</head>
+<body>
+<div class="auth-card">
+    <div class="auth-logo-block">
+        <img src="/static/img/logo3-_1_.png" alt="Логотип" class="auth-logo-img">
+    </div>
+    <h2 class="auth-title">Регистрация</h2>
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        <label for="username">Имя пользователя</label>
+        <input type="text" id="username" name="username" required value="{{ values.username|default:'' }}">
+        {% if errors.username %}<div class="alert-error">{{ errors.username }}</div>{% endif %}
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required value="{{ values.email|default:'' }}">
+        {% if errors.email %}<div class="alert-error">{{ errors.email }}</div>{% endif %}
+        <label for="phone">Телефон</label>
+        <input type="text" id="phone" name="phone" value="{{ values.phone|default:'' }}">
+        {% if errors.phone %}<div class="alert-error">{{ errors.phone }}</div>{% endif %}
+        <label for="role">Роль</label>
+        <select id="role" name="role">
+            <option value="user" {% if values.role == 'user' or not values.role %}selected{% endif %}>Пользователь</option>
+            <option value="shelter" {% if values.role == 'shelter' %}selected{% endif %}>Представитель приюта</option>
+        </select>
+        {% if values.role == 'shelter' %}
+        <div id="new-shelter-block" class="new-shelter-block">
+            <div class="new-shelter-desc">Заполните данные приюта. После проверки администратором приют появится в системе.</div>
+            <label for="new_name_shelter">Название приюта</label>
+            <input type="text" id="new_name_shelter" name="new_name_shelter" value="{{ values.new_name_shelter|default:'' }}">
+            <label for="new_address_shelter">Адрес приюта</label>
+            <input type="text" id="new_address_shelter" name="new_address_shelter" value="{{ values.new_address_shelter|default:'' }}">
+            <label for="new_email_shelter">Email приюта</label>
+            <input type="email" id="new_email_shelter" name="new_email_shelter" value="{{ values.new_email_shelter|default:'' }}">
+            <label for="new_telephone_shelter">Телефон приюта</label>
+            <input type="text" id="new_telephone_shelter" name="new_telephone_shelter" value="{{ values.new_telephone_shelter|default:'' }}">
+            <label for="new_capacity">Вместимость приюта</label>
+            <input type="number" id="new_capacity" name="new_capacity" min="1" value="{{ values.new_capacity|default:'' }}">
+        </div>
+        {% endif %}
+        <label for="password1">Пароль</label>
+        <input type="password" id="password1" name="password1" required>
+        {% if errors.password1 %}<div class="alert-error">{{ errors.password1 }}</div>{% endif %}
+        <label for="password2">Подтверждение пароля</label>
+        <input type="password" id="password2" name="password2" required>
+        {% if errors.password2 %}<div class="alert-error">{{ errors.password2 }}</div>{% endif %}
+        <button type="submit" class="auth-btn">Зарегистрироваться</button>
+    </form>
+    <div class="auth-bottom-link">
+        Уже есть аккаунт? <a href="/login/">Войти</a>
+    </div>
+</div>
+</body>
+</html> 

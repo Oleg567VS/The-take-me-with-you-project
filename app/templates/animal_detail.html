@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ animal.nickname_pets }} — карточка животного</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <script>
+        // Галерея: смена главного фото по клику
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainPhoto = document.getElementById('main-photo');
+            const thumbs = document.querySelectorAll('.animal-detail-thumb');
+            thumbs.forEach(thumb => {
+                thumb.addEventListener('click', function() {
+                    mainPhoto.src = this.src;
+                    thumbs.forEach(t => t.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <a href="/" class="logo">
+            <img src="/static/img/logo3-_1_.png" alt="Логотип">
+            <span>Забери меня с собой</span>
+        </a>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="/lost-found/">Найти животное</a>
+            <a href="/take/">Взять животное</a>
+            {% if user.is_authenticated %}
+                <a href="/logout/">Выйти</a>
+                <a href="/profile/" class="user-avatar">
+                    <img src="/static/img/user-avatar.svg" alt="Профиль">
+                </a>
+                <a href="/chats/" class="margin-left-10 font-weight-600">Чаты</a>
+            {% else %}
+                <a href="/login/">Вход</a>
+                <a href="/register/">Регистрация</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<div class="animal-detail-card">
+    <div class="animal-detail-title"><span>🐾</span>{{ animal.nickname_pets }}</div>
+    <div class="animal-detail-gallery">
+        {% if photos %}
+            <img id="main-photo" src="{{ photos.0.image.url }}" alt="Фото {{ animal.nickname_pets }}" class="animal-detail-main-photo">
+            <div class="animal-detail-thumbs">
+                {% for photo in photos %}
+                    <img src="{{ photo.image.url }}" class="animal-detail-thumb{% if forloop.first %} selected{% endif %}" alt="Миниатюра {{ animal.nickname_pets }}">
+                {% endfor %}
+            </div>
+        {% else %}
+            <img src="https://placehold.co/320x180?text=Нет+фото" alt="Нет фото" class="animal-detail-main-photo">
+        {% endif %}
+    </div>
+    <div class="animal-detail-info-grid">
+        <div><span class="animal-detail-label">Вид:</span> {{ animal.view }}</div>
+        <div><span class="animal-detail-label">Порода:</span> {{ animal.breed }}</div>
+        <div><span class="animal-detail-label">Возраст:</span> {{ animal.age }} лет</div>
+        <div><span class="animal-detail-label">Пол:</span> {{ animal.get_gender_display }}</div>
+        <div><span class="animal-detail-label">Окрас:</span> {{ animal.color }}</div>
+    </div>
+    {% if animal.info %}
+    <div class="animal-detail-block">
+        <div class="animal-detail-block-title">О животном</div>
+        <div>{{ animal.info }}</div>
+    </div>
+    {% endif %}
+    <div class="animal-detail-block animal-detail-shelter">
+        <div class="animal-detail-block-title">Приют</div>
+        <div><b>{{ animal.shelter.name_shelter }}</b></div>
+        <div>{{ animal.shelter.address_shelter }}</div>
+        {% if animal.shelter.telephone_shelter %}<div>Телефон: {{ animal.shelter.telephone_shelter }}</div>{% endif %}
+        {% if animal.shelter.email_shelter %}<div>Email: {{ animal.shelter.email_shelter }}</div>{% endif %}
+    </div>
+    <a href="/" class="animal-detail-back">На главную</a>
+</div>
+</body>
+</html> 

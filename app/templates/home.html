@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Забери меня с собой</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style/style.css" />
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+</head>
+<body>
+<header>
+    <div class="header-content">
+        <div class="logo">
+            <img src="/static/img/logo3-_1_.png" alt="Логотип">
+            <span>Забери меня с собой</span>
+        </div>
+        <nav>
+            <a href="#about">О нас</a>
+            <a href="/lost-found/">Найти животное</a>
+            <a href="/take/">Взять животное</a>
+            {% if user.is_authenticated %}
+                <a href="/logout/">Выйти</a>
+                <a href="/profile/" class="user-avatar">
+                    <img src="/static/img/user-avatar.svg" alt="Профиль">
+                </a>
+                <a href="/chats/" style="margin-left:10px;font-weight:600;">Чаты</a>
+            {% else %}
+                <a href="/login/">Вход</a>
+                <a href="/register/">Регистрация</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<div class="container">
+    <section id="about" class="section about">
+        <div class="section-title"><span class="about-icon">🐾</span>О нас</div>
+        <p>Мы помогаем животным найти дом, а людям — верных друзей. Наш сервис объединяет приюты, волонтёров и всех неравнодушных, чтобы каждая потеряшка обрела заботу и любовь.</p>
+    </section>
+    <section id="find" class="section map-block">
+        <div class="section-title">Места пропажи животных</div>
+        <div id="lost-map"></div>
+        <div class="legend-block">
+            <b class="legend-red">Красная метка</b> — пропавшее животное.<br>
+            <b class="legend-blue">Синяя метка</b> — найденое животное.
+        </div>
+    </section>
+    <section id="take" class="section animals-block">
+        <div class="section-title">Возьми меня домой</div>
+        <div class="animals-grid">
+            {% for animal in animals %}
+            <div class="animal-card">
+                {% with photos=animal.photos.all %}
+                    {% if photos %}
+                        <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                    {% else %}
+                        <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                    {% endif %}
+                {% endwith %}
+                <h3>{{ animal.nickname_pets }}</h3>
+                <p>{{ animal.breed }}, {{ animal.age }} лет</p>
+                <p><b>{{ animal.shelter.name_shelter }}</b></p>
+                <a href="/animal/{{ animal.id }}/" class="btn">Подробнее</a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="take-more-btn-wrapper">
+            <a href="/take/" class="btn take-more-btn">Смотреть ещё</a>
+        </div>
+    </section>
+</div>
+{{ lost_animals|json_script:"lost-animals-data" }}
+{{ found_animals|json_script:"found-animals-data" }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        ymaps.ready(function () {
+            let lostMarkers = JSON.parse(document.getElementById('lost-animals-data').textContent)
+                .filter(animal => animal.latitude && animal.longitude)
+                .map(animal => ({
+                    id: animal.id,
+                    name: animal.lostie_name,
+                    place: animal.place_of_loss,
+                    lat: parseFloat(animal.latitude),
+                    lng: parseFloat(animal.longitude),
+                    type: 'lost'
+                }));
+            let foundMarkers = JSON.parse(document.getElementById('found-animals-data').textContent)
+                .filter(animal => animal.latitude && animal.longitude)
+                .map(animal => ({
+                    id: animal.id,
+                    name: animal.name,
+                    place: animal.place_found,
+                    lat: parseFloat(animal.latitude),
+                    lng: parseFloat(animal.longitude),
+                    type: 'found'
+                }));
+            let allMarkers = lostMarkers.concat(foundMarkers);
+            // Тестовая метка для проверки работы карты
+            // if (allMarkers.length === 0) {
+            //     allMarkers.push({
+            //         name: 'Тестовая метка',
+            //         place: 'Москва, Красная площадь',
+            //         lat: 55.753215,
+            //         lng: 37.622504,
+            //         type: 'lost',
+            //         id: 0
+            //     });
+            // }
+            var center = [55.751244, 37.618423]; // Москва по умолчанию
+            var zoom = 5;
+            if (allMarkers.length > 0) {
+                center = [allMarkers[0].lat, allMarkers[0].lng];
+                zoom = 10;
+            }
+            var map = new ymaps.Map('lost-map', {
+                center: center,
+                zoom: zoom,
+                controls: ['zoomControl', 'fullscreenControl']
+            });
+            allMarkers.forEach(function(marker) {
+                let url = marker.type === 'lost' ? '/lost-animal/' + marker.id + '/' : '/found-animal/' + marker.id + '/';
+                let color = marker.type === 'lost' ? 'islands#redIcon' : 'islands#blueIcon';
+                var placemark = new ymaps.Placemark([marker.lat, marker.lng], {
+                    balloonContent: '<b>' + marker.name + '</b><br>' + marker.place + '<br><a href="' + url + '" target="_blank">Подробнее</a>'
+                }, {
+                    preset: color
+                });
+                map.geoObjects.add(placemark);
+            });
+        });
+    });
+</script>
+</body>
+</html> 
