@@ -1,3 +1,4 @@
+{% load age_filters %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -67,7 +68,17 @@
                 {% endwith %}
                 <div class="animal-info">
                     <div class="animal-name">{{ animal.nickname_pets }}</div>
-                    <div class="animal-desc">{{ animal.breed }}, {{ animal.age }} лет</div>
+                    <div class="animal-desc">
+                        {% if animal.age_years and animal.age_months %}
+                            {{ animal.age_years }} {{ animal.age_years|years_ru }} {{ animal.age_months }} {{ animal.age_months|months_ru }}
+                        {% elif animal.age_years %}
+                            {{ animal.age_years }} {{ animal.age_years|years_ru }}
+                        {% elif animal.age_months %}
+                            {{ animal.age_months }} {{ animal.age_months|months_ru }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
                 </div>
                 <div class="animal-actions">
                     <a href="/edit-animal/{{ animal.id }}/" class="edit-btn">Редактировать</a>

@@ -72,7 +72,8 @@ SIZE_CHOICES = [
 class Animal(models.Model):
     nickname_pets = models.CharField("Кличка", max_length=150)
     breed = models.CharField("Порода", max_length=100)
-    age = models.PositiveIntegerField("Возраст")
+    age_years = models.PositiveIntegerField("Возраст (лет)", default=0)
+    age_months = models.PositiveIntegerField("Возраст (месяцев)", default=0)
     size = models.CharField("Размер", max_length=10, choices=SIZE_CHOICES, default='medium')
     view = models.CharField("Вид", max_length=100)
     gender = models.CharField("Пол", max_length=10, choices=GENDER_CHOICES)

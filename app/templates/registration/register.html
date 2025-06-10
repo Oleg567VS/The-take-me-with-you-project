@@ -41,6 +41,7 @@
             <input type="text" id="new_telephone_shelter" name="new_telephone_shelter" value="{{ values.new_telephone_shelter|default:'' }}">
             <label for="new_capacity">Вместимость приюта</label>
             <input type="number" id="new_capacity" name="new_capacity" min="1" value="{{ values.new_capacity|default:'' }}">
+            {% if errors.new_capacity %}<div class="alert-error">{{ errors.new_capacity }}</div>{% endif %}
         </div>
         {% endif %}
         <label for="password1">Пароль</label>

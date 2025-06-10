@@ -28,9 +28,12 @@
             {% if errors.nickname_pets %}<div class="alert-error">{{ errors.nickname_pets }}</div>{% endif %}
             <label for="breed">Порода</label>
             <input type="text" id="breed" name="breed" value="{{ animal.breed }}">
-            <label for="age">Возраст</label>
-            <input type="number" id="age" name="age" min="0" required value="{{ animal.age }}">
-            {% if errors.age %}<div class="alert-error">{{ errors.age }}</div>{% endif %}
+            <label for="age_years">Возраст (лет)</label>
+            <input type="number" id="age_years" name="age_years" min="0" value="{{ animal.age_years }}">
+            <label for="age_months">Возраст (месяцев)</label>
+            <input type="number" id="age_months" name="age_months" min="0" max="11" value="{{ animal.age_months }}">
+            {% if errors.age_years %}<div class="alert-error">{{ errors.age_years }}</div>{% endif %}
+            {% if errors.age_months %}<div class="alert-error">{{ errors.age_months }}</div>{% endif %}
             <label for="size">Размер</label>
             <select id="size" name="size" required>
                 <option value="">— Выберите размер —</option>

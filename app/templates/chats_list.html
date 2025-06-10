@@ -39,7 +39,7 @@
     {% if chats %}
     <div class="flex-col-gap18">
         {% for chat in chats %}
-        <a href="{% if chat.type == 'found' %}/found-animal/{{ chat.obj.id }}/{% else %}/lost-animal/{{ chat.obj.id }}/{% endif %}" class="text-decoration-none">
+        <a href="{% if chat.type == 'found' %}/found-animal/{{ chat.obj.id }}{% else %}/lost-animal/{{ chat.obj.id }}{% endif %}{% if user.id == chat.obj.owner_id %}?with={{ chat.other_user.id }}{% endif %}" class="text-decoration-none">
             <div class="bg-white border-radius-12 box-shadow-1 padding-18 flex-row-gap18 transition-box-shadow">
                 {% if chat.type == 'found' %}
                     {% if chat.obj.photo %}
@@ -57,6 +57,7 @@
                 <div class="flex1">
                     <div class="font-weight-600 font-size-113">
                         {% if chat.type == 'found' %}Найдено: {{ chat.obj.name|default:'Без клички' }}{% else %}Пропал: {{ chat.obj.lostie_name }}{% endif %}
+                        <span class="color-888 font-size-098">— {{ chat.other_user.username }}</span>
                     </div>
                     <div class="color-888 font-size-098">{{ chat.last_msg.text|truncatechars:40 }}</div>
                     <div class="font-size-098 color-888 text-align-right" style="margin-top:4px;">

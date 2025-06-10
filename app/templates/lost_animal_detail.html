@@ -40,7 +40,7 @@
 </header>
 <div class="detail-card">
     {% if animal.photo %}
-        <img src="{{ animal.photo.url }}" alt="{{ animal.lostie_name }}" class="detail-photo">
+        <img src="{{ animal.photo.url }}" alt="{{ animal.lostie_name }}" class="detail-photo" style="object-fit:contain;background:none;">
     {% else %}
         <div class="detail-photo flex-center color-aaa">Нет фото</div>
     {% endif %}
@@ -73,17 +73,15 @@
                 <button type="submit">Отправить</button>
             </form>
         {% elif user and user == owner %}
+            {% if active_recipient %}
             <form method="post" class="chat-form margin-top-10">
                 {% csrf_token %}
                 <textarea name="text" placeholder="Введите сообщение..." required autofocus></textarea>
-                <select name="recipient_id" class="chat-recipient-select">
-                    <option value="">Всем участникам</option>
-                    {% for participant in chat_participants %}
-                        <option value="{{ participant.id }}">{{ participant.username }}</option>
-                    {% endfor %}
-                </select>
                 <button type="submit">Отправить</button>
             </form>
+            {% else %}
+                <div class="color-aaa">Выберите пользователя для диалога</div>
+            {% endif %}
         {% elif not user %}
             <div class="color-888 font-size-098 text-center margin-top-8">Войдите, чтобы написать владельцу</div>
         {% endif %}

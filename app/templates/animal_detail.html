@@ -1,3 +1,4 @@
+{% load age_filters %}
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -62,7 +63,19 @@
     <div class="animal-detail-info-grid">
         <div><span class="animal-detail-label">Вид:</span> {{ animal.view }}</div>
         <div><span class="animal-detail-label">Порода:</span> {{ animal.breed }}</div>
-        <div><span class="animal-detail-label">Возраст:</span> {{ animal.age }} лет</div>
+        <div><span class="animal-detail-label">Возраст:</span>
+            <p class="animal-age">
+                {% if animal.age_years and animal.age_months %}
+                    {{ animal.age_years }} {{ animal.age_years|years_ru }} {{ animal.age_months }} {{ animal.age_months|months_ru }}
+                {% elif animal.age_years %}
+                    {{ animal.age_years }} {{ animal.age_years|years_ru }}
+                {% elif animal.age_months %}
+                    {{ animal.age_months }} {{ animal.age_months|months_ru }}
+                {% else %}
+                    —
+                {% endif %}
+            </p>
+        </div>
         <div><span class="animal-detail-label">Пол:</span> {{ animal.get_gender_display }}</div>
         <div><span class="animal-detail-label">Окрас:</span> {{ animal.color }}</div>
     </div>

@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import Animal, LostAnimal, Shelter, CustomUser, ShelterRepresentative, FoundAnimal, Message
-from django.db.models import Q
+from django.db.models import Q, F
 import re
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -67,6 +67,10 @@ def register(request):
                 errors['new_name_shelter'] = 'Введите название приюта.'
             if not new_address_shelter:
                 errors['new_address_shelter'] = 'Введите адрес приюта.'
+            if not new_capacity:
+                errors['new_capacity'] = 'Укажите вместимость приюта.'
+            elif not new_capacity.isdigit() or int(new_capacity) < 1:
+                errors['new_capacity'] = 'Вместимость должна быть положительным числом.'
 
         # Проверка уникальности username
         if username and CustomUser.objects.filter(username=username).exists():
@@ -99,7 +103,7 @@ def register(request):
                 address_shelter=new_address_shelter,
                 email_shelter=new_email_shelter,
                 telephone_shelter=new_telephone_shelter,
-                capacity=int(new_capacity) if new_capacity.isdigit() else None,
+                capacity=int(new_capacity),
                 is_approved=False
             )
             ShelterRepresentative.objects.create(user=user, name=username, telephone=phone, email=email, shelter=shelter)
@@ -314,7 +318,8 @@ def add_animal(request):
     if request.method == 'POST':
         nickname_pets = request.POST.get('nickname_pets', '').strip()
         breed = request.POST.get('breed', '').strip()
-        age = request.POST.get('age', '').strip()
+        age_years = request.POST.get('age_years', '0').strip()
+        age_months = request.POST.get('age_months', '0').strip()
         size = request.POST.get('size', '').strip()
         view = request.POST.get('view', '').strip()
         gender = request.POST.get('gender', '').strip()
@@ -324,7 +329,8 @@ def add_animal(request):
         values = {
             'nickname_pets': nickname_pets,
             'breed': breed,
-            'age': age,
+            'age_years': age_years,
+            'age_months': age_months,
             'size': size,
             'view': view,
             'gender': gender,
@@ -334,8 +340,10 @@ def add_animal(request):
         # Валидация
         if not nickname_pets:
             errors['nickname_pets'] = 'Введите кличку.'
-        if not age or not age.isdigit():
-            errors['age'] = 'Укажите возраст (число).' 
+        if not age_years.isdigit() or int(age_years) < 0:
+            errors['age_years'] = 'Укажите возраст в годах (0 или больше).'
+        if not age_months.isdigit() or not (0 <= int(age_months) <= 11):
+            errors['age_months'] = 'Месяцы должны быть от 0 до 11.'
         if not view:
             errors['view'] = 'Введите вид.'
         if not gender:
@@ -347,7 +355,8 @@ def add_animal(request):
             animal = Animal.objects.create(
                 nickname_pets=nickname_pets,
                 breed=breed,
-                age=int(age),
+                age_years=int(age_years),
+                age_months=int(age_months),
                 size=size,
                 view=view,
                 gender=gender,
@@ -388,10 +397,13 @@ def take_animals(request):
         animals = animals.filter(shelter__city=city)
     if view_type:
         animals = animals.filter(view=view_type)
-    if age_min:
-        animals = animals.filter(age__gte=age_min)
-    if age_max:
-        animals = animals.filter(age__lte=age_max)
+    # Фильтрация по возрасту в месяцах
+    if age_min or age_max:
+        animals = animals.annotate(total_months=F('age_years') * 12 + F('age_months'))
+        if age_min:
+            animals = animals.filter(total_months__gte=int(age_min)*12)
+        if age_max:
+            animals = animals.filter(total_months__lte=int(age_max)*12)
     # Пагинация
     per_page = request.GET.get('per_page', 20)
     try:
@@ -434,7 +446,8 @@ def edit_animal(request, animal_id):
     if request.method == 'POST':
         nickname_pets = request.POST.get('nickname_pets', '').strip()
         breed = request.POST.get('breed', '').strip()
-        age = request.POST.get('age', '').strip()
+        age_years = request.POST.get('age_years', '0').strip()
+        age_months = request.POST.get('age_months', '0').strip()
         size = request.POST.get('size', '').strip()
         view = request.POST.get('view', '').strip()
         gender = request.POST.get('gender', '').strip()
@@ -442,8 +455,10 @@ def edit_animal(request, animal_id):
         info = request.POST.get('info', '').strip()
         if not nickname_pets:
             errors['nickname_pets'] = 'Введите кличку.'
-        if not age or not age.isdigit():
-            errors['age'] = 'Укажите возраст (число).'
+        if not age_years.isdigit() or int(age_years) < 0:
+            errors['age_years'] = 'Укажите возраст в годах (0 или больше).'
+        if not age_months.isdigit() or not (0 <= int(age_months) <= 11):
+            errors['age_months'] = 'Месяцы должны быть от 0 до 11.'
         if not view:
             errors['view'] = 'Введите вид.'
         if not gender:
@@ -453,7 +468,8 @@ def edit_animal(request, animal_id):
         if not errors:
             animal.nickname_pets = nickname_pets
             animal.breed = breed
-            animal.age = int(age)
+            animal.age_years = int(age_years)
+            animal.age_months = int(age_months)
             animal.size = size
             animal.view = view
             animal.gender = gender
@@ -534,9 +550,34 @@ def lost_animal_detail(request, animal_id):
     animal = get_object_or_404(LostAnimal, id=animal_id)
     user = request.user if request.user.is_authenticated else None
     from .models import Message
-    messages = Message.objects.filter(lost_animal=animal).order_by('created_at')
     owner = animal.owner
-    chat_participants = set(messages.values_list('sender', flat=True)) - {owner.id}
+    # Определяем собеседника: если владелец — показываем диалог с выбранным пользователем, иначе — только с владельцем
+    if user == owner:
+        # Владелец может выбрать, с кем из участников вести диалог (по ссылке ?with=ID)
+        recipient_id = request.GET.get('with')
+        if recipient_id:
+            try:
+                recipient = CustomUser.objects.get(id=recipient_id)
+            except CustomUser.DoesNotExist:
+                recipient = None
+        else:
+            # По умолчанию показываем первого участника, если есть
+            participants = Message.objects.filter(lost_animal=animal).exclude(sender=owner).values_list('sender', flat=True).distinct()
+            recipient = CustomUser.objects.get(id=participants[0]) if participants else None
+        if recipient:
+            messages = Message.objects.filter(lost_animal=animal).filter(
+                (Q(sender=owner) & Q(recipient=recipient)) | (Q(sender=recipient) & Q(recipient=owner))
+            ).order_by('created_at')
+        else:
+            messages = Message.objects.none()
+        chat_participants = CustomUser.objects.filter(id__in=Message.objects.filter(lost_animal=animal).exclude(sender=owner).values_list('sender', flat=True).distinct())
+    else:
+        # Обычный пользователь видит только свой диалог с владельцем
+        recipient = owner
+        messages = Message.objects.filter(lost_animal=animal).filter(
+            (Q(sender=user) & Q(recipient=owner)) | (Q(sender=owner) & Q(recipient=user))
+        ).order_by('created_at')
+        chat_participants = None
     if request.method == 'POST' and user:
         action = request.POST.get('action')
         if action == 'delete' and user == owner:
@@ -544,70 +585,77 @@ def lost_animal_detail(request, animal_id):
             animal.save()
             return redirect('/lost-found/?status=lost')
         text = request.POST.get('text', '').strip()
-        if text:
-            if user == owner:
-                recipient_id = request.POST.get('recipient_id')
-                if recipient_id and int(recipient_id) in chat_participants:
-                    recipient = CustomUser.objects.get(id=recipient_id)
-                    Message.objects.create(sender=user, recipient=recipient, text=text, lost_animal=animal)
-                else:
-                    for pid in chat_participants:
-                        recipient = CustomUser.objects.get(id=pid)
-                        Message.objects.create(sender=user, recipient=recipient, text=text, lost_animal=animal)
-            else:
-                recipient = owner
-                Message.objects.create(sender=user, recipient=recipient, text=text, lost_animal=animal)
-            return redirect(request.path_info)
-    messages = Message.objects.filter(lost_animal=animal).order_by('created_at')
+        if text and recipient:
+            Message.objects.create(sender=user, recipient=recipient, text=text, lost_animal=animal)
+            return redirect(f"{request.path_info}?with={recipient.id}" if user == owner and recipient else request.path_info)
     return render(request, 'lost_animal_detail.html', {
         'animal': animal,
         'messages': messages,
         'user': user,
         'owner': owner,
-        'chat_participants': CustomUser.objects.filter(id__in=chat_participants) if user == owner else None,
+        'chat_participants': chat_participants if user == owner else None,
+        'active_recipient': recipient if user == owner else None,
     })
 
 @login_required
 def chats_list(request):
     user = request.user
-    from .models import Message, FoundAnimal, LostAnimal
+    from .models import Message, FoundAnimal, LostAnimal, CustomUser
     if request.method == 'POST' and request.POST.get('action') == 'delete':
         chat_type = request.POST.get('chat_type')
         chat_id = request.POST.get('chat_id')
+        chat_with = request.POST.get('chat_with')
         if chat_type == 'found':
             try:
                 animal = FoundAnimal.objects.get(id=chat_id)
-                Message.objects.filter(found_animal=animal).delete()
+                if chat_with:
+                    Message.objects.filter(found_animal=animal).filter(
+                        (Q(sender=user) & Q(recipient_id=chat_with)) | (Q(sender_id=chat_with) & Q(recipient=user))
+                    ).delete()
+                else:
+                    Message.objects.filter(found_animal=animal).filter(Q(sender=user) | Q(recipient=user)).delete()
             except FoundAnimal.DoesNotExist:
                 pass
         elif chat_type == 'lost':
             try:
                 animal = LostAnimal.objects.get(id=chat_id)
-                Message.objects.filter(lost_animal=animal).delete()
+                if chat_with:
+                    Message.objects.filter(lost_animal=animal).filter(
+                        (Q(sender=user) & Q(recipient_id=chat_with)) | (Q(sender_id=chat_with) & Q(recipient=user))
+                    ).delete()
+                else:
+                    Message.objects.filter(lost_animal=animal).filter(Q(sender=user) | Q(recipient=user)).delete()
             except LostAnimal.DoesNotExist:
                 pass
         return redirect(request.path_info)
-    user_messages = Message.objects.filter(
-        Q(sender=user) | Q(recipient=user)
-    ).order_by('-created_at')
+    user_messages = Message.objects.filter(Q(sender=user) | Q(recipient=user)).order_by('-created_at')
     chat_dict = {}
     archive_dict = {}
     for msg in user_messages:
-        key = None
-        obj = None
-        is_archive = False
         if msg.found_animal:
-            key = f'found_{msg.found_animal.id}'
-            obj = msg.found_animal
-            is_archive = msg.found_animal.is_matched or msg.found_animal.is_deleted
+            animal = msg.found_animal
+            other_user = msg.recipient if msg.sender == user else msg.sender
+            key = f'found_{animal.id}_{min(user.id, other_user.id)}_{max(user.id, other_user.id)}'
+            is_archive = animal.is_matched or animal.is_deleted
+            obj = animal
+            chat_type = 'found'
         elif msg.lost_animal:
-            key = f'lost_{msg.lost_animal.id}'
-            obj = msg.lost_animal
-            is_archive = (msg.lost_animal.is_found or msg.lost_animal.is_deleted)
-        if key and obj:
-            d = archive_dict if is_archive else chat_dict
-            if key not in d:
-                d[key] = {'obj': obj, 'last_msg': msg, 'type': 'found' if msg.found_animal else 'lost'}
+            animal = msg.lost_animal
+            other_user = msg.recipient if msg.sender == user else msg.sender
+            key = f'lost_{animal.id}_{min(user.id, other_user.id)}_{max(user.id, other_user.id)}'
+            is_archive = animal.is_found or animal.is_deleted
+            obj = animal
+            chat_type = 'lost'
+        else:
+            continue
+        d = archive_dict if is_archive else chat_dict
+        if key not in d:
+            d[key] = {
+                'obj': obj,
+                'last_msg': msg,
+                'type': chat_type,
+                'other_user': other_user,
+            }
     chats = sorted(chat_dict.values(), key=lambda x: x['last_msg'].created_at, reverse=True)
     archive_chats = sorted(archive_dict.values(), key=lambda x: x['last_msg'].created_at, reverse=True)
     return render(request, 'chats_list.html', {'chats': chats, 'archive_chats': archive_chats})

@@ -96,9 +96,12 @@
             {% if errors.nickname_pets %}<div class="alert-error">{{ errors.nickname_pets }}</div>{% endif %}
             <label for="breed">Порода</label>
             <input type="text" id="breed" name="breed" value="{{ values.breed|default:'' }}">
-            <label for="age">Возраст</label>
-            <input type="number" id="age" name="age" min="0" required value="{{ values.age|default:'' }}">
-            {% if errors.age %}<div class="alert-error">{{ errors.age }}</div>{% endif %}
+            <label for="age_years">Возраст (лет)</label>
+            <input type="number" id="age_years" name="age_years" min="0" value="{{ values.age_years|default:'0' }}">
+            <label for="age_months">Возраст (месяцев)</label>
+            <input type="number" id="age_months" name="age_months" min="0" max="11" value="{{ values.age_months|default:'0' }}">
+            {% if errors.age_years %}<div class="alert-error">{{ errors.age_years }}</div>{% endif %}
+            {% if errors.age_months %}<div class="alert-error">{{ errors.age_months }}</div>{% endif %}
             <label for="view">Вид</label>
             <input type="text" id="view" name="view" required value="{{ values.view|default:'' }}">
             {% if errors.view %}<div class="alert-error">{{ errors.view }}</div>{% endif %}

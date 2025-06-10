@@ -699,7 +699,7 @@ nav a:hover {
 
 /* --- DETAIL & CHAT STYLES (moved from templates) --- */
 .detail-card { background:#fff; border-radius:18px; box-shadow:0 4px 24px #0001; max-width:600px; margin:40px auto 0 auto; padding:32px 24px 24px 24px; }
-.detail-photo { width:100%; max-width:480px; height:240px; object-fit:cover; border-radius:12px; margin-bottom:18px; background:#f4f6fa; }
+.detail-photo { width:100%; max-width:480px; height:240px; object-fit:contain; border-radius:12px; margin-bottom:18px; background:#f4f6fa; }
 .detail-title { font-size:2em; font-weight:700; color:#222; margin-bottom:10px; }
 .detail-info { font-size:1.1em; color:#444; margin-bottom:8px; }
 .detail-label { color:#888; font-size:0.98em; margin-right:8px; }
@@ -751,12 +751,11 @@ nav a:hover {
 .animal-detail-main-photo {
   width: 320px;
   height: 240px;
-  object-fit: cover;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px #0001;
-  background: #f4f6fa;
-  margin-bottom: 10px;
-  transition: box-shadow 0.2s;
+  object-fit: contain;
+  border-radius: 12px;
+  background: none;
+  display: block;
+  margin: 0 auto 12px auto;
 }
 .animal-detail-thumbs {
   display: flex;

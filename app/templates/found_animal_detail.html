@@ -56,7 +56,7 @@
 </header>
 <div class="detail-card">
     {% if animal.photo %}
-        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" class="detail-photo">
+        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}" class="detail-photo" style="object-fit:contain;background:none;">
     {% else %}
         <div class="detail-photo flex-center color-aaa">Нет фото</div>
     {% endif %}
