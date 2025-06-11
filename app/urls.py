@@ -20,4 +20,5 @@ urlpatterns = [
     path('found-animal/<int:animal_id>/', views.found_animal_detail, name='found_animal_detail'),
     path('lost-animal/<int:animal_id>/', views.lost_animal_detail, name='lost_animal_detail'),
     path('chats/', views.chats_list, name='chats_list'),
+    path('get_yandex_coords/', views.get_yandex_coords, name='get_yandex_coords'),
 ]

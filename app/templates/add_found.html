@@ -24,21 +24,17 @@
             <label for="place_found">Место находки</label>
             <input type="text" id="place_found" name="place_found" required>
             {% if errors.place_found %}<div class="alert-error">{{ errors.place_found }}</div>{% endif %}
-            <div class="flex-gap-10">
-                <div class="flex1">
-                    <label for="latitude">Широта</label>
-                    <input type="text" id="latitude" name="latitude" placeholder="например, 55.751244">
-                </div>
-                <div class="flex1">
-                    <label for="longitude">Долгота</label>
-                    <input type="text" id="longitude" name="longitude" placeholder="например, 37.618423">
-                </div>
-            </div>
             <label for="date_found">Дата находки</label>
             <input type="date" id="date_found" name="date_found" required>
             {% if errors.date_found %}<div class="alert-error">{{ errors.date_found }}</div>{% endif %}
             <label for="info">Дополнительная информация</label>
             <textarea id="info" name="info" rows="3"></textarea>
+            <label for="yandex_link">Ссылка на Яндекс.Карты</label>
+            <input type="text" id="yandex_link" name="yandex_link" placeholder="https://yandex.ru/maps/-/..." value="{{ yandex_link|default:'' }}">
+            {% if errors.yandex_link %}<div class="alert-error">{{ errors.yandex_link }}</div>{% endif %}
+            <div class="alert-error" style="margin-top:6px;">
+                <b>Откройте ссылку в браузере, скопируйте полный адрес из адресной строки (он должен содержать <code>ll=...</code>). Для максимальной точности используйте ссылку, полученную через кнопку "Поделиться" с маркером на Яндекс.Картах (в ссылке должен быть параметр <code>pt</code>).</b>
+            </div>
         </div>
         <div class="avito-form-section avito-photo-upload">
             <label for="photo">Фото животного</label>
@@ -50,5 +46,35 @@
         </div>
     </form>
 </div>
+<script>
+function extractCoordsFromYandex(url) {
+    try {
+        const llMatch = url.match(/[?&]ll=([\d.]+)%2C([\d.]+)/);
+        if (llMatch) {
+            return {lat: llMatch[2], lon: llMatch[1]};
+        }
+        // Если короткая ссылка, пробуем получить редирект
+        if (url.includes('yandex.ru/maps/-/')) {
+            fetch('/get_yandex_coords/?url=' + encodeURIComponent(url))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.lat && data.lon) {
+                        document.getElementById('latitude').value = data.lat;
+                        document.getElementById('longitude').value = data.lon;
+                    }
+                });
+        }
+    } catch(e) {}
+    return null;
+}
+document.getElementById('yandex_link').addEventListener('change', function() {
+    const url = this.value;
+    const coords = extractCoordsFromYandex(url);
+    if (coords) {
+        document.getElementById('latitude').value = coords.lat;
+        document.getElementById('longitude').value = coords.lon;
+    }
+});
+</script>
 </body>
 </html> 

@@ -52,9 +52,13 @@
             <div class="animal-card">
                 {% with photos=animal.photos.all %}
                     {% if photos %}
-                        <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                        <div class="animal-card-img-wrapper">
+                            <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                        </div>
                     {% else %}
-                        <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                        <div class="animal-card-img-wrapper">
+                            <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                        </div>
                     {% endif %}
                 {% endwith %}
                 <h3>{{ animal.nickname_pets }}</h3>
@@ -93,7 +97,9 @@
                     place: animal.place_of_loss,
                     lat: parseFloat(animal.latitude),
                     lng: parseFloat(animal.longitude),
-                    type: 'lost'
+                    type: 'lost',
+                    photo: animal.photo,
+                    info: animal.info
                 }));
             let foundMarkers = JSON.parse(document.getElementById('found-animals-data').textContent)
                 .filter(animal => animal.latitude && animal.longitude)
@@ -103,20 +109,11 @@
                     place: animal.place_found,
                     lat: parseFloat(animal.latitude),
                     lng: parseFloat(animal.longitude),
-                    type: 'found'
+                    type: 'found',
+                    photo: animal.photo,
+                    info: animal.info
                 }));
             let allMarkers = lostMarkers.concat(foundMarkers);
-            // Тестовая метка для проверки работы карты
-            // if (allMarkers.length === 0) {
-            //     allMarkers.push({
-            //         name: 'Тестовая метка',
-            //         place: 'Москва, Красная площадь',
-            //         lat: 55.753215,
-            //         lng: 37.622504,
-            //         type: 'lost',
-            //         id: 0
-            //     });
-            // }
             var center = [55.751244, 37.618423]; // Москва по умолчанию
             var zoom = 5;
             if (allMarkers.length > 0) {
@@ -128,16 +125,38 @@
                 zoom: zoom,
                 controls: ['zoomControl', 'fullscreenControl']
             });
+            var clusterer = new ymaps.Clusterer({
+                preset: 'islands#invertedVioletClusterIcons',
+                groupByCoordinates: false,
+                clusterDisableClickZoom: false,
+                clusterOpenBalloonOnClick: true,
+                clusterBalloonContentLayout: 'cluster#balloonCarousel',
+                clusterBalloonItemContentLayout: ymaps.templateLayoutFactory.createClass(
+                    '<div style="padding:10px;">$[properties.balloonContent]</div>'
+                ),
+                clusterBalloonPanelMaxMapArea: 0
+            });
+            var geoObjects = [];
             allMarkers.forEach(function(marker) {
                 let url = marker.type === 'lost' ? '/lost-animal/' + marker.id + '/' : '/found-animal/' + marker.id + '/';
                 let color = marker.type === 'lost' ? 'islands#redIcon' : 'islands#blueIcon';
+                let photoHtml = marker.photo ? `<img src="${marker.photo}" style="max-width:180px;max-height:120px;display:block;margin-bottom:8px;">` : '';
+                let infoHtml = marker.info ? `<div style="margin-bottom:8px;">${marker.info}</div>` : '';
                 var placemark = new ymaps.Placemark([marker.lat, marker.lng], {
-                    balloonContent: '<b>' + marker.name + '</b><br>' + marker.place + '<br><a href="' + url + '" target="_blank">Подробнее</a>'
+                    balloonContent: `
+                        ${photoHtml}
+                        <b>${marker.name}</b><br>
+                        ${marker.place}<br>
+                        ${infoHtml}
+                        <a href="${url}" target="_blank">Подробнее</a>
+                    `
                 }, {
                     preset: color
                 });
-                map.geoObjects.add(placemark);
+                geoObjects.push(placemark);
             });
+            clusterer.add(geoObjects);
+            map.geoObjects.add(clusterer);
         });
     });
 </script>

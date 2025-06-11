@@ -118,9 +118,13 @@
         <div class="animal-card">
             {% with photos=animal.photos.all %}
                 {% if photos %}
-                    <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                    <div class="animal-card-img-wrapper">
+                        <img src="{{ photos.0.image.url }}" alt="{{ animal.nickname_pets }}">
+                    </div>
                 {% else %}
-                    <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                    <div class="animal-card-img-wrapper">
+                        <img src="https://placehold.co/300x140?text=Нет+фото" alt="Нет фото">
+                    </div>
                 {% endif %}
             {% endwith %}
             <h3>{{ animal.nickname_pets }}</h3>

@@ -89,9 +89,13 @@
         <div class="animal-card cursor-pointer" onclick="window.location.href='{% if filter.status == 'found' %}/found-animal/{{ animal.id }}/{% else %}/lost-animal/{{ animal.id }}/{% endif %}'">
             {% if filter.status == 'found' %}
                 {% if animal.photo %}
-                    <img src="{{ animal.photo.url }}" alt="{{ animal.name }}">
+                    <div class="animal-card-img-wrapper">
+                        <img src="{{ animal.photo.url }}" alt="{{ animal.name }}">
+                    </div>
                 {% else %}
-                    <img src="https://placehold.co/320x160?text=Нет+фото" alt="Нет фото">
+                    <div class="animal-card-img-wrapper">
+                        <img src="https://placehold.co/320x160?text=Нет+фото" alt="Нет фото">
+                    </div>
                 {% endif %}
                 <div class="status-label status-label-found">Найден</div>
                 <h3>{{ animal.name|default:'Без клички' }}</h3>
@@ -101,9 +105,13 @@
                 <p>Дата: {{ animal.date_found }}</p>
             {% else %}
                 {% if animal.photo %}
-                    <img src="{{ animal.photo.url }}" alt="{{ animal.lostie_name }}">
+                    <div class="animal-card-img-wrapper">
+                        <img src="{{ animal.photo.url }}" alt="{{ animal.lostie_name }}">
+                    </div>
                 {% else %}
-                    <img src="https://placehold.co/320x160?text=Нет+фото" alt="Нет фото">
+                    <div class="animal-card-img-wrapper">
+                        <img src="https://placehold.co/320x160?text=Нет+фото" alt="Нет фото">
+                    </div>
                 {% endif %}
                 <div class="status-label status-label-lost">Пропал</div>
                 <h3>{{ animal.lostie_name }}</h3>

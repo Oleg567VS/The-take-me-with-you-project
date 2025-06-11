@@ -7,6 +7,10 @@ import re
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.utils import timezone
+import requests
+from urllib.parse import urlparse, parse_qs
+from django.http import JsonResponse
+import logging
 
 def index(request):
     return render(request, 'app/index.html')
@@ -15,8 +19,30 @@ def home(request):
     # 8 животных из приютов для блока "Возьми меня домой"
     animals = Animal.objects.all()[:8]
     # Все потерянные животные для карты
-    lost_animals = list(LostAnimal.objects.filter(is_deleted=False).values('id', 'lostie_name', 'place_of_loss', 'latitude', 'longitude'))
-    found_animals = list(FoundAnimal.objects.filter(is_deleted=False).values('id', 'name', 'place_found', 'latitude', 'longitude'))
+    lost_animals_qs = LostAnimal.objects.filter(is_deleted=False)
+    lost_animals = []
+    for animal in lost_animals_qs:
+        lost_animals.append({
+            'id': animal.id,
+            'lostie_name': animal.lostie_name,
+            'place_of_loss': animal.place_of_loss,
+            'latitude': animal.latitude,
+            'longitude': animal.longitude,
+            'photo': animal.photo.url if animal.photo else '',
+            'info': animal.info or '',
+        })
+    found_animals_qs = FoundAnimal.objects.filter(is_deleted=False)
+    found_animals = []
+    for animal in found_animals_qs:
+        found_animals.append({
+            'id': animal.id,
+            'name': animal.name,
+            'place_found': animal.place_found,
+            'latitude': animal.latitude,
+            'longitude': animal.longitude,
+            'photo': animal.photo.url if animal.photo else '',
+            'info': animal.info or '',
+        })
     return render(request, 'home.html', {
         'animals': animals,
         'lost_animals': lost_animals,
@@ -127,8 +153,10 @@ def login_view(request):
 
 @login_required
 def add_lost(request):
+    logger = logging.getLogger(__name__)
     shelters = Shelter.objects.all()
     errors = {}
+    latitude = longitude = yandex_link = ''
     if request.method == 'POST':
         lostie_name = request.POST.get('lostie_name', '').strip()
         view = request.POST.get('view', '').strip()
@@ -137,8 +165,34 @@ def add_lost(request):
         place_of_loss = request.POST.get('place_of_loss', '').strip()
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
+        yandex_link = request.POST.get('yandex_link', '').strip()
         date_of_loss = request.POST.get('date_of_loss', '').strip()
         info = request.POST.get('info', '').strip()
+        # Если координаты не указаны, но есть ссылка, получить координаты
+        if (not latitude or not longitude) and yandex_link:
+            try:
+                session = requests.Session()
+                resp = session.get(yandex_link, allow_redirects=True, timeout=5)
+                final_url = resp.url
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(final_url)
+                params = parse_qs(parsed.query)
+                if 'pt' in params:
+                    lon, lat = params['pt'][0].split(',')
+                    latitude = lat
+                    longitude = lon
+                    logger.info(f"Получены координаты из pt: {latitude}, {longitude}")
+                elif 'll' in params:
+                    lon, lat = params['ll'][0].split(',')
+                    latitude = lat
+                    longitude = lon
+                    logger.info(f"Получены координаты из ll: {latitude}, {longitude}")
+                else:
+                    errors['yandex_link'] = 'Ссылка не содержит координаты.'
+                    logger.warning(f"Ссылка не содержит pt или ll: {yandex_link}")
+            except Exception as e:
+                errors['yandex_link'] = 'Не удалось получить координаты по ссылке.'
+                logger.error(f"Ошибка получения координат: {e}")
         # Валидация
         if not lostie_name:
             errors['lostie_name'] = 'Введите кличку.'
@@ -161,6 +215,9 @@ def add_lost(request):
                 lon_value = float(longitude)
             except ValueError:
                 errors['longitude'] = 'Некорректная долгота.'
+        # Если координаты не получены вообще, добавить ошибку
+        if (not lat_value or not lon_value) and not errors.get('yandex_link'):
+            errors['yandex_link'] = 'Не удалось получить координаты. Заполните вручную или укажите корректную ссылку.'
         if not errors:
             lost_animal = LostAnimal.objects.create(
                 lostie_name=lostie_name,
@@ -176,11 +233,13 @@ def add_lost(request):
                 photo=request.FILES.get('photo') if request.FILES.get('photo') else None
             )
             return redirect('home')
-    return render(request, 'add_lost.html', {'errors': errors})
+    return render(request, 'add_lost.html', {'errors': errors, 'latitude': latitude, 'longitude': longitude, 'yandex_link': yandex_link})
 
 @login_required
 def add_found(request):
+    logger = logging.getLogger(__name__)
     errors = {}
+    latitude = longitude = yandex_link = ''
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         view = request.POST.get('view', '').strip()
@@ -189,8 +248,34 @@ def add_found(request):
         place_found = request.POST.get('place_found', '').strip()
         latitude = request.POST.get('latitude', '').strip()
         longitude = request.POST.get('longitude', '').strip()
+        yandex_link = request.POST.get('yandex_link', '').strip()
         date_found = request.POST.get('date_found', '').strip()
         info = request.POST.get('info', '').strip()
+        # Если координаты не указаны, но есть ссылка, получить координаты
+        if (not latitude or not longitude) and yandex_link:
+            try:
+                session = requests.Session()
+                resp = session.get(yandex_link, allow_redirects=True, timeout=5)
+                final_url = resp.url
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(final_url)
+                params = parse_qs(parsed.query)
+                if 'pt' in params:
+                    lon, lat = params['pt'][0].split(',')
+                    latitude = lat
+                    longitude = lon
+                    logger.info(f"Получены координаты из pt: {latitude}, {longitude}")
+                elif 'll' in params:
+                    lon, lat = params['ll'][0].split(',')
+                    latitude = lat
+                    longitude = lon
+                    logger.info(f"Получены координаты из ll: {latitude}, {longitude}")
+                else:
+                    errors['yandex_link'] = 'Ссылка не содержит координаты.'
+                    logger.warning(f"Ссылка не содержит pt или ll: {yandex_link}")
+            except Exception as e:
+                errors['yandex_link'] = 'Не удалось получить координаты по ссылке.'
+                logger.error(f"Ошибка получения координат: {e}")
         # Валидация
         if not view:
             errors['view'] = 'Введите вид.'
@@ -211,6 +296,9 @@ def add_found(request):
                 lon_value = float(longitude)
             except ValueError:
                 errors['longitude'] = 'Некорректная долгота.'
+        # Если координаты не получены вообще, добавить ошибку
+        if (not lat_value or not lon_value) and not errors.get('yandex_link'):
+            errors['yandex_link'] = 'Не удалось получить координаты. Заполните вручную или укажите корректную ссылку.'
         if not errors:
             found_animal = FoundAnimal.objects.create(
                 name=name,
@@ -226,7 +314,7 @@ def add_found(request):
                 photo=request.FILES.get('photo') if request.FILES.get('photo') else None
             )
             return redirect('home')
-    return render(request, 'add_found.html', {'errors': errors})
+    return render(request, 'add_found.html', {'errors': errors, 'latitude': latitude, 'longitude': longitude, 'yandex_link': yandex_link})
 
 def logout_view(request):
     logout(request)
@@ -659,5 +747,26 @@ def chats_list(request):
     chats = sorted(chat_dict.values(), key=lambda x: x['last_msg'].created_at, reverse=True)
     archive_chats = sorted(archive_dict.values(), key=lambda x: x['last_msg'].created_at, reverse=True)
     return render(request, 'chats_list.html', {'chats': chats, 'archive_chats': archive_chats})
+
+def get_yandex_coords(request):
+    url = request.GET.get('url')
+    if not url:
+        return JsonResponse({'error': 'no url'}, status=400)
+    try:
+        session = requests.Session()
+        resp = session.get(url, allow_redirects=True, timeout=5)
+        final_url = resp.url
+        parsed = urlparse(final_url)
+        params = parse_qs(parsed.query)
+        if 'pt' in params:
+            lon, lat = params['pt'][0].split(',')
+            return JsonResponse({'lat': lat, 'lon': lon})
+        elif 'll' in params:
+            lon, lat = params['ll'][0].split(',')
+            return JsonResponse({'lat': lat, 'lon': lon})
+        else:
+            return JsonResponse({'error': 'no pt or ll'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 # Create your views here.
